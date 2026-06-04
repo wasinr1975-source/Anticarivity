@@ -1,0 +1,23 @@
+{
+  "name": "u-r-what-u-eat",
+  "version": "1.0.0",
+  "description": "U R What U Eat - Premium Calorie, Macro, and Vitamin deficient tracker with dynamic AI Photo Meal Scanning and PromptPay ฿29 paywall slip verification.",
+  "main": "index.html",
+  "scripts": {
+    "dev:python": "python -m http.server 3000",
+    "dev:npx": "npx serve",
+    "info": "echo \"This is a zero-dependency modern client-side Single Page Application. It can be opened directly by double-clicking index.html or served via any static web server.\""
+  },
+  "keywords": [
+    "health",
+    "calorie",
+    "tracker",
+    "promptpay",
+    "thai-qr",
+    "nutrition",
+    "vitamin-deficit",
+    "gourmet-diet"
+  ],
+  "author": "Antigravity Dev Team",
+  "license": "MIT"
+}

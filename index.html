@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U R What U Eat - Premium Calorie & Nutrition Coach</title>
+    
+    <!-- Meta Tags for SEO -->
+    <meta name="description" content="U R What U Eat is a premium personalized calorie coach, meal scanner, and smart dietary recommender designed to help you live healthier.">
+    <meta name="keywords" content="calorie tracker, meal scanner, diet coach, nutrient deficit, healthy eating, weight loss, PromptPay calculator">
+    
+    <!-- Google Fonts for Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons for Premium UI Visuals -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- QRCode JS Library via CDN for dynamic PromptPay QR generation -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <!-- Custom Premium Stylesheet -->
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+
+    <!-- Main Navigation Bar -->
+    <header class="app-header">
+        <div class="header-logo">
+            <div class="logo-icon">
+                <i data-lucide="leaf"></i>
+            </div>
+            <h1 class="logo-text">U R What U Eat</h1>
+        </div>
+        <div class="header-actions">
+            <span class="status-badge unlocked-badge hidden" id="status-badge">
+                <i data-lucide="shield-check"></i> Premium Unlocked
+            </span>
+            <button class="icon-btn dev-toggle" id="dev-toggle" title="Developer Sandbox Controls">
+                <i data-lucide="sliders"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- App Container -->
+    <main class="app-main">
+
+        <!-- ================= PAGE 1: PAYWALL VIEW ================= -->
+        <section id="paywall-view" class="view-section active">
+            <div class="paywall-hero">
+                <span class="badge-capsule">
+                    <i data-lucide="sparkles"></i> ONE-TIME UNLOCK
+                </span>
+                <h2 class="paywall-title">Unlock <em>everything</em></h2>
+                <p class="paywall-subtitle">
+                    A single ฿29 payment unlocks personalized calorie coaching, meal scanning and smart recommendations — forever.
+                </p>
+            </div>
+
+            <div class="paywall-grid">
+                <!-- QR Code Display Card (Left) -->
+                <div class="paywall-card qr-card">
+                    <span class="pay-badge">THAI QR • PROMPTPAY</span>
+                    
+                    <div class="qr-container">
+                        <canvas id="promptpay-qr-canvas"></canvas>
+                        <div class="qr-logo-overlay">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c5/PromptPay-logo.png" alt="PromptPay" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    
+                    <div class="price-display">฿29.00</div>
+                    <div class="pay-instruction">Pay to PromptPay</div>
+                    <div class="account-number">092-499-8924</div>
+                    <div class="account-holder">K Orawan Bank Account</div>
+                </div>
+
+                <!-- Pay Instructions and Upload (Right) -->
+                <div class="paywall-card instruction-card">
+                    <ol class="step-list">
+                        <li>
+                            <div class="step-num">1</div>
+                            <div class="step-text">
+                                <strong>Scan & pay</strong>
+                                <p>Open any Thai bank app, scan the QR, and transfer exactly ฿29.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-num">2</div>
+                            <div class="step-text">
+                                <strong>Upload your slip</strong>
+                                <p>Save your bank transfer screenshot and attach it below.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-num">3</div>
+                            <div class="step-text">
+                                <strong>AI checks it</strong>
+                                <p>The system reviews the slip in real-time and unlocks your dashboard instantly.</p>
+                            </div>
+                        </li>
+                    </ol>
+
+                    <!-- Drag & Drop / Input area -->
+                    <div class="upload-dropzone" id="slip-dropzone">
+                        <input type="file" id="slip-file-input" accept="image/*" class="hidden-input">
+                        <div class="dropzone-content">
+                            <div class="upload-icon">
+                                <i data-lucide="image"></i>
+                            </div>
+                            <span class="upload-label">Upload payment slip</span>
+                            <span class="upload-subtext">Drag a screenshot here, or click to browse</span>
+                        </div>
+                        <div class="uploaded-preview hidden" id="slip-preview-container">
+                            <img id="slip-preview-img" src="" alt="Slip Preview">
+                            <button class="remove-slip-btn" id="remove-slip-btn" title="Remove slip">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Verify Button -->
+                    <button class="primary-btn verify-btn" id="verify-payment-btn" disabled>
+                        <i data-lucide="sparkles"></i>
+                        <span>Verify payment & unlock</span>
+                    </button>
+
+                    <!-- Demo Bypass Quick Help -->
+                    <div class="demo-tip">
+                        <button class="text-link-btn" id="demo-slip-btn">
+                            <i data-lucide="lightbulb"></i> Need a demo slip? Click to load a sandbox slip
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2: ONBOARDING VIEW ================= -->
+        <section id="onboarding-view" class="view-section">
+            <div class="form-container glass-card">
+                <div class="form-header">
+                    <h2>Let's build your healthy profile</h2>
+                    <p>Provide your details to calculate your personalized daily calorie and nutrient targets.</p>
+                </div>
+
+                <form id="onboarding-form" class="profile-form">
+                    <div class="form-grid">
+                        <!-- Age -->
+                        <div class="form-group">
+                            <label for="input-age">
+                                <i data-lucide="calendar"></i> Age
+                            </label>
+                            <input type="number" id="input-age" placeholder="e.g. 28" min="10" max="100" required>
+                            <span class="input-helper">Years old</span>
+                        </div>
+
+                        <!-- Gender Selector -->
+                        <div class="form-group">
+                            <label><i data-lucide="user"></i> Gender</label>
+                            <div class="gender-cards">
+                                <label class="gender-card">
+                                    <input type="radio" name="gender" value="female" checked required>
+                                    <div class="gender-card-content">
+                                        <i data-lucide="user-round-plus" class="female-color"></i>
+                                        <span>Female</span>
+                                    </div>
+                                </label>
+                                <label class="gender-card">
+                                    <input type="radio" name="gender" value="male">
+                                    <div class="gender-card-content">
+                                        <i data-lucide="user-round" class="male-color"></i>
+                                        <span>Male</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Height -->
+                        <div class="form-group">
+                            <label for="input-height">
+                                <i data-lucide="ruler"></i> Height
+                            </label>
+                            <div class="input-with-addon">
+                                <input type="number" id="input-height" placeholder="e.g. 165" min="100" max="250" required>
+                                <span class="input-addon">cm</span>
+                            </div>
+                        </div>
+
+                        <!-- Weight -->
+                        <div class="form-group">
+                            <label for="input-weight">
+                                <i data-lucide="scale"></i> Weight
+                            </label>
+                            <div class="input-with-addon">
+                                <input type="number" id="input-weight" placeholder="e.g. 58" min="30" max="250" required>
+                                <span class="input-addon">kg</span>
+                            </div>
+                        </div>
+
+                        <!-- Activity Level -->
+                        <div class="form-group full-width">
+                            <label for="input-activity"><i data-lucide="activity"></i> Activity Level</label>
+                            <select id="input-activity" required>
+                                <option value="1.2">Sedentary (Little to no exercise)</option>
+                                <option value="1.375" selected>Lightly Active (Light exercise 1-3 days/week)</option>
+                                <option value="1.55">Moderately Active (Moderate exercise 3-5 days/week)</option>
+                                <option value="1.725">Very Active (Hard exercise 6-7 days/week)</option>
+                            </select>
+                        </div>
+
+                        <!-- Goal -->
+                        <div class="form-group full-width">
+                            <label><i data-lucide="target"></i> Weight Goal</label>
+                            <div class="goal-options">
+                                <label class="goal-card">
+                                    <input type="radio" name="goal" value="lose" checked>
+                                    <div class="goal-card-content">
+                                        <div class="goal-icon"><i data-lucide="trending-down"></i></div>
+                                        <strong>Lose Weight</strong>
+                                        <span>Mild calorie deficit</span>
+                                    </div>
+                                </label>
+                                <label class="goal-card">
+                                    <input type="radio" name="goal" value="maintain">
+                                    <div class="goal-card-content">
+                                        <div class="goal-icon"><i data-lucide="equal"></i></div>
+                                        <strong>Maintain Weight</strong>
+                                        <span>Balanced energy</span>
+                                    </div>
+                                </label>
+                                <label class="goal-card">
+                                    <input type="radio" name="goal" value="gain">
+                                    <div class="goal-card-content">
+                                        <div class="goal-icon"><i data-lucide="trending-up"></i></div>
+                                        <strong>Gain Weight</strong>
+                                        <span>Mild calorie surplus</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="primary-btn submit-btn" id="onboarding-submit-btn">
+                        <span>Generate My Fitness Plan</span>
+                        <i data-lucide="arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: DASHBOARD VIEW ================= -->
+        <section id="dashboard-view" class="view-section">
+            
+            <!-- Dashboard Welcome Banner -->
+            <div class="dashboard-banner">
+                <div class="banner-welcome">
+                    <h2>Hello, Healthy!</h2>
+                    <p>Tracked inputs: <span id="summary-gender">Female</span>, <span id="summary-age">28</span>yo, <span id="summary-weight">58</span>kg, <span id="summary-height">165</span>cm. Target: <span id="summary-goal" class="goal-highlight">Lose weight</span></p>
+                </div>
+                <button class="secondary-btn btn-sm" id="edit-profile-btn">
+                    <i data-lucide="edit-3"></i> Edit Profile
+                </button>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- PANEL A: Calorie Ring Summary -->
+                <div class="dashboard-card main-summary-card">
+                    <h3>Today's Calorie Budget</h3>
+                    
+                    <div class="calorie-ring-box">
+                        <svg class="progress-ring-svg" width="220" height="220">
+                            <!-- Track Circle -->
+                            <circle class="progress-ring-track" cx="110" cy="110" r="95"></circle>
+                            <!-- Progress Circle -->
+                            <circle class="progress-ring-bar" id="calorie-progress-bar" cx="110" cy="110" r="95"></circle>
+                        </svg>
+                        <div class="calorie-ring-text">
+                            <span class="remaining-num" id="calc-remaining">0</span>
+                            <span class="remaining-label">kcal remaining</span>
+                        </div>
+                    </div>
+
+                    <div class="calorie-math-bar">
+                        <div class="math-stat">
+                            <span class="math-val" id="calc-budget">0</span>
+                            <span class="math-lbl">Daily Goal</span>
+                        </div>
+                        <div class="math-op">-</div>
+                        <div class="math-stat">
+                            <span class="math-val eaten-val" id="calc-eaten">0</span>
+                            <span class="math-lbl">Eaten</span>
+                        </div>
+                        <div class="math-op">+</div>
+                        <div class="math-stat">
+                            <span class="math-val burned-val" id="calc-burned">0</span>
+                            <span class="math-lbl">Exercise</span>
+                        </div>
+                    </div>
+
+                    <div class="manual-quick-add">
+                        <h4>Quick Add Calorie</h4>
+                        <div class="quick-add-row">
+                            <input type="number" id="quick-add-kcal" placeholder="Kcal" min="10" max="2000">
+                            <input type="text" id="quick-add-name" placeholder="Food name (optional)">
+                            <button class="primary-btn btn-sm" id="quick-add-btn">
+                                <i data-lucide="plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL B: Nutrient Deficiency Balancer -->
+                <div class="dashboard-card deficit-card">
+                    <div class="card-header-with-badge">
+                        <h3>Nutritional Balancer</h3>
+                        <span class="card-badge" id="nutrient-status-badge">Deficit alert</span>
+                    </div>
+                    <p class="subtitle-text">Keep your nutrients balanced to prevent health deficiencies.</p>
+                    
+                    <div class="nutrient-list">
+                        <!-- Protein Tracker -->
+                        <div class="nutrient-progress-group">
+                            <div class="nutrient-meta">
+                                <span class="nut-name"><i data-lucide="egg" class="nut-protein-icon"></i> Protein</span>
+                                <span class="nut-status" id="nut-status-protein">Lacking 90g</span>
+                            </div>
+                            <div class="progress-track-bg">
+                                <div class="progress-fill fill-protein" id="nut-fill-protein" style="width: 25%"></div>
+                            </div>
+                            <div class="nut-goals">
+                                <span>Eaten: <span id="nut-eaten-protein">0g</span></span>
+                                <span>Target: <span id="nut-goal-protein">120g</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Carbohydrates Tracker -->
+                        <div class="nutrient-progress-group">
+                            <div class="nutrient-meta">
+                                <span class="nut-name"><i data-lucide="wheat" class="nut-carbs-icon"></i> Carbohydrate</span>
+                                <span class="nut-status" id="nut-status-carbs">Lacking 170g</span>
+                            </div>
+                            <div class="progress-track-bg">
+                                <div class="progress-fill fill-carbs" id="nut-fill-carbs" style="width: 32%"></div>
+                            </div>
+                            <div class="nut-goals">
+                                <span>Eaten: <span id="nut-eaten-carbs">0g</span></span>
+                                <span>Target: <span id="nut-goal-carbs">250g</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Fat Tracker -->
+                        <div class="nutrient-progress-group">
+                            <div class="nutrient-meta">
+                                <span class="nut-name"><i data-lucide="droplet" class="nut-fat-icon"></i> Fat</span>
+                                <span class="nut-status" id="nut-status-fat">Lacking 55g</span>
+                            </div>
+                            <div class="progress-track-bg">
+                                <div class="progress-fill fill-fat" id="nut-fill-fat" style="width: 20%"></div>
+                            </div>
+                            <div class="nut-goals">
+                                <span>Eaten: <span id="nut-eaten-fat">0g</span></span>
+                                <span>Target: <span id="nut-goal-fat">70g</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Vitamins Tracker -->
+                        <div class="nutrient-progress-group">
+                            <div class="nutrient-meta">
+                                <span class="nut-name"><i data-lucide="shield" class="nut-vitamins-icon"></i> Vitamins & Minerals</span>
+                                <span class="nut-status" id="nut-status-vit">Lacking 80%</span>
+                            </div>
+                            <div class="progress-track-bg">
+                                <div class="progress-fill fill-vit" id="nut-fill-vit" style="width: 20%"></div>
+                            </div>
+                            <div class="nut-goals">
+                                <span id="vitamins-breakdown">Vit A, C, D, Calcium, Iron deficit</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL C: Meal Journal, Scanner & Recommender -->
+                <div class="dashboard-card interactive-journal-card">
+                    <!-- Tab Controls -->
+                    <div class="tabs-nav">
+                        <button class="tab-btn active" data-tab="journal">
+                            <i data-lucide="clipboard-list"></i> Meal Journal
+                        </button>
+                        <button class="tab-btn highlight-tab" data-tab="scanner">
+                            <i data-lucide="camera"></i> AI Meal Scanner
+                        </button>
+                        <button class="tab-btn" data-tab="recommender">
+                            <i data-lucide="sparkles"></i> Recommendations
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: Meal Journal Content -->
+                    <div class="tab-content active" id="tab-journal">
+                        <div class="journal-timeline">
+                            <!-- Breakfast -->
+                            <div class="meal-period-node" id="node-breakfast">
+                                <div class="node-header">
+                                    <div class="node-title-group">
+                                        <span class="meal-icon"><i data-lucide="coffee"></i></span>
+                                        <strong>Breakfast</strong>
+                                    </div>
+                                    <span class="meal-kcal" id="kcal-breakfast">0 kcal</span>
+                                </div>
+                                <div class="node-items-list" id="list-breakfast">
+                                    <div class="no-food-placeholder">No foods logged yet</div>
+                                </div>
+                            </div>
+
+                            <!-- Lunch -->
+                            <div class="meal-period-node" id="node-lunch">
+                                <div class="node-header">
+                                    <div class="node-title-group">
+                                        <span class="meal-icon"><i data-lucide="utensils"></i></span>
+                                        <strong>Lunch</strong>
+                                    </div>
+                                    <span class="meal-kcal" id="kcal-lunch">0 kcal</span>
+                                </div>
+                                <div class="node-items-list" id="list-lunch">
+                                    <div class="no-food-placeholder">No foods logged yet</div>
+                                </div>
+                            </div>
+
+                            <!-- Dinner -->
+                            <div class="meal-period-node" id="node-dinner">
+                                <div class="node-header">
+                                    <div class="node-title-group">
+                                        <span class="meal-icon"><i data-lucide="soup"></i></span>
+                                        <strong>Dinner</strong>
+                                    </div>
+                                    <span class="meal-kcal" id="kcal-dinner">0 kcal</span>
+                                </div>
+                                <div class="node-items-list" id="list-dinner">
+                                    <div class="no-food-placeholder">No foods logged yet</div>
+                                </div>
+                            </div>
+
+                            <!-- Snacks -->
+                            <div class="meal-period-node" id="node-snack">
+                                <div class="node-header">
+                                    <div class="node-title-group">
+                                        <span class="meal-icon"><i data-lucide="cookie"></i></span>
+                                        <strong>Snacks</strong>
+                                    </div>
+                                    <span class="meal-kcal" id="kcal-snack">0 kcal</span>
+                                </div>
+                                <div class="node-items-list" id="list-snack">
+                                    <div class="no-food-placeholder">No logged snacks</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: AI Meal Scanner Content -->
+                    <div class="tab-content" id="tab-scanner">
+                        <div class="scanner-wrapper">
+                            <p class="scanner-desc">Upload a picture of your dish. Our health AI will extract the ingredients, calorie count, and micronutrient profile dynamically.</p>
+                            
+                            <div class="scanner-visual-box" id="scanner-visual-box">
+                                <!-- Grid Scanner Design -->
+                                <div class="scanner-grid-overlay hidden" id="scanner-grid-overlay">
+                                    <div class="scanner-laser-line"></div>
+                                    <div class="scanner-corners">
+                                        <span class="corner tl"></span>
+                                        <span class="corner tr"></span>
+                                        <span class="corner bl"></span>
+                                        <span class="corner br"></span>
+                                    </div>
+                                    <div class="scanner-pulse-circle"></div>
+                                    <div class="scanner-detection-box hidden" id="scan-bounding-box-1">
+                                        <span class="box-tag">PAD THAI DETECTED (88%)</span>
+                                    </div>
+                                </div>
+
+                                <div class="scanner-placeholder-content" id="scanner-placeholder">
+                                    <i data-lucide="camera"></i>
+                                    <span>Upload food photo or camera capture</span>
+                                    <small>Supports PNG, JPG, WebP slips/meal photos</small>
+                                </div>
+
+                                <img id="scanner-image-preview" class="hidden" src="" alt="Meal Scan">
+                            </div>
+
+                            <div class="scanner-action-bar">
+                                <input type="file" id="meal-file-input" accept="image/*" class="hidden-input">
+                                <button class="primary-btn" id="meal-browse-btn">
+                                    <i data-lucide="upload-cloud"></i> Upload Meal Photo
+                                </button>
+                            </div>
+
+                            <!-- Showcase presets to make testing incredibly simple and immersive -->
+                            <div class="preset-meals-section">
+                                <h5>OR CHOOSE A DEMO DISH TO SCAN:</h5>
+                                <div class="preset-grid">
+                                    <button class="preset-btn" data-meal="padthai">
+                                        <span>🍜 Pad Thai</span>
+                                    </button>
+                                    <button class="preset-btn" data-meal="salmonsalad">
+                                        <span>🥗 Salmon Salad</span>
+                                    </button>
+                                    <button class="preset-btn" data-meal="greencurry">
+                                        <span>🍛 Green Curry</span>
+                                    </button>
+                                    <button class="preset-btn" data-meal="chickenbreast">
+                                        <span>🍗 Grilled Chicken</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Scanner Result Modal Overlay (shown when scanned) -->
+                            <div class="scan-result-card hidden" id="scan-result-card">
+                                <div class="result-header">
+                                    <h4><i data-lucide="check-circle" class="success-icon"></i> AI Scan Result</h4>
+                                    <button class="close-result-btn" id="close-scan-result"><i data-lucide="x"></i></button>
+                                </div>
+                                <div class="result-body">
+                                    <div class="detected-title" id="scan-dish-name">Pad Thai</div>
+                                    <div class="detected-kcal" id="scan-dish-kcal">650 kcal</div>
+                                    <p class="detected-descr" id="scan-dish-descr">Classic Thai stir-fried noodles with shrimp, egg, bean sprouts, and tofu.</p>
+                                    
+                                    <div class="scan-nutrients-grid">
+                                        <div class="scan-nut-item">
+                                            <span>Protein</span>
+                                            <strong id="scan-dish-protein">22g</strong>
+                                        </div>
+                                        <div class="scan-nut-item">
+                                            <span>Carbs</span>
+                                            <strong id="scan-dish-carbs">85g</strong>
+                                        </div>
+                                        <div class="scan-nut-item">
+                                            <span>Fat</span>
+                                            <strong id="scan-dish-fat">18g</strong>
+                                        </div>
+                                        <div class="scan-nut-item">
+                                            <span>Vitamins</span>
+                                            <strong id="scan-dish-vit">20%</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="log-selector-row">
+                                        <label for="log-meal-period">Log for:</label>
+                                        <select id="log-meal-period">
+                                            <option value="breakfast">Breakfast</option>
+                                            <option value="lunch" selected>Lunch</option>
+                                            <option value="dinner">Dinner</option>
+                                            <option value="snack">Snack</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="result-footer">
+                                    <button class="primary-btn btn-full" id="confirm-log-scan-btn">
+                                        <i data-lucide="plus-circle"></i> Log Food & Update Deficit
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Next Meal Recommender Content -->
+                    <div class="tab-content" id="tab-recommender">
+                        <div class="recommender-wrapper">
+                            <div class="recommender-alert" id="recommender-intro">
+                                <div class="alert-icon"><i data-lucide="sparkles"></i></div>
+                                <div class="alert-body">
+                                    <strong>AI Dietitian Recommendation</strong>
+                                    <p id="recommender-analysis-text">Based on your current deficiency, we recommend meals enriched in protein and vitamins.</p>
+                                </div>
+                            </div>
+
+                            <div class="recommended-meals-grid" id="recommended-meals-list">
+                                <!-- Recommender list will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================= MODAL: SCANNING VISUALIZER FOR SLIP ================= -->
+    <div class="scan-modal-overlay hidden" id="scan-modal-overlay">
+        <div class="scan-modal-card">
+            <div class="scan-modal-header">
+                <h3><i data-lucide="cpu" class="spinning-icon"></i> AI Receipt Slip Auditor</h3>
+                <span class="scan-status" id="scan-modal-status">Analyzing transfer receipt...</span>
+            </div>
+            <div class="scan-modal-body">
+                <div class="ocr-visualizer-container">
+                    <!-- Receipt image preview inside canvas -->
+                    <div class="ocr-receipt-holder">
+                        <img id="ocr-receipt-img" src="" alt="Scanning slip">
+                        <!-- Laser beam lines -->
+                        <div class="ocr-laser"></div>
+                        <!-- Bounding boxes matching slip analysis dynamically -->
+                        <div class="ocr-bounding-box box-recipient hidden" id="box-ocr-recipient">
+                            <span class="ocr-label">RECIPIENT: K Orawan (MATCH)</span>
+                        </div>
+                        <div class="ocr-bounding-box box-amount hidden" id="box-ocr-amount">
+                            <span class="ocr-label">AMOUNT: ฿29.00 (MATCH)</span>
+                        </div>
+                        <div class="ocr-bounding-box box-account hidden" id="box-ocr-account">
+                            <span class="ocr-label">PROMPTPAY: 092-499-8924 (MATCH)</span>
+                        </div>
+                        <div class="ocr-bounding-box box-stamp hidden" id="box-ocr-stamp">
+                            <span class="ocr-label">BANK AUTH STAMP: VALID</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step progress trackers -->
+                <ul class="ocr-check-steps">
+                    <li id="ocr-step-1"><i data-lucide="circle"></i> Checking payment network & bank authentication seal...</li>
+                    <li id="ocr-step-2"><i data-lucide="circle"></i> Extracting recipient account (K Orawan / 092-499-8924)...</li>
+                    <li id="ocr-step-3"><i data-lucide="circle"></i> Validating pricing threshold (฿29.00)...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SIDEBAR: DEVELOPER SANDBOX CONTROL PANEL ================= -->
+    <aside class="dev-panel hidden" id="dev-panel">
+        <div class="dev-header">
+            <h4><i data-lucide="sliders"></i> Sandbox Dev Controls</h4>
+            <button class="icon-btn" id="close-dev-panel"><i data-lucide="x"></i></button>
+        </div>
+        <div class="dev-body">
+            <p class="dev-desc">Use these tools to bypass the bank transfer paywall or reset the app databases for grading/testing.</p>
+            
+            <div class="dev-section-group">
+                <h5>STATE BYPASS</h5>
+                <button class="primary-btn btn-sm btn-full" id="dev-bypass-paywall-btn">
+                    <i data-lucide="unlock"></i> Force Unlock Premium
+                </button>
+                <button class="secondary-btn btn-sm btn-full m-t-8" id="dev-relock-paywall-btn">
+                    <i data-lucide="lock"></i> Force Lock Premium
+                </button>
+            </div>
+
+            <div class="dev-section-group">
+                <h5>DATABASE CONTROLS</h5>
+                <button class="danger-btn btn-sm btn-full" id="dev-reset-all-btn">
+                    <i data-lucide="trash-2"></i> Reset App & LocalStorage
+                </button>
+            </div>
+
+            <div class="dev-section-group">
+                <h5>ACTIVE DATABASE STATE</h5>
+                <pre class="dev-json" id="dev-db-state">{}</pre>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Footer of the page -->
+    <footer class="app-footer">
+        <p>&copy; 2026 U R What U Eat Inc. Clean Health and Mind. All rights reserved.</p>
+    </footer>
+
+    <!-- Core App Logic modules -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="src/utils/promptpay.js"></script>
+    <script src="src/utils/qrcode.js"></script>
+    <script src="src/components/paywall.js"></script>
+    <script src="src/components/onboarding.js"></script>
+    <script src="src/components/dashboard.js"></script>
+    <script src="src/components/mealScanner.js"></script>
+    <script src="src/components/recommender.js"></script>
+    <script src="src/main.js"></script>
+    
+    <script>
+        // Trigger Lucide SVG icon renders
+        lucide.createIcons();
+    </script>
+</body>
+</html>
