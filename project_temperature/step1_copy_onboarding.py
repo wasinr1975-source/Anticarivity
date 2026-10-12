@@ -6,11 +6,13 @@ Copy the onboarding survey files into Branchestafflist.xlsx:
     onboarding 60days.xlsx  ->  Branchestafflist.xlsx [sheet "60days"]
     onboarding 90days.xlsx  ->  Branchestafflist.xlsx [sheet "90days"]
 
-Behaviour (= "paste values"):
-  * Reads the first sheet of each source file (or SOURCE_SHEET if set).
+Behaviour (= "paste values", columns A:R only):
+  * Reads columns A:R of the first sheet of each source file
+    (or SOURCE_SHEET if set).
   * Formulas in the source are pasted as their last calculated values.
-  * The target sheet is cleared first, then the source is pasted from A1
-    (header row included). Other sheets in Branchestafflist are untouched.
+  * Columns A:R of the target sheet are cleared first, then the source is
+    pasted from A1 (header row included). Columns S onward in the target
+    sheet and all other sheets in Branchestafflist are left untouched.
   * A timestamped backup of Branchestafflist is made before writing.
   * After saving, the target is re-opened and every cell is compared with
     the source; the script exits with an error if anything differs.
@@ -26,6 +28,8 @@ from datetime import datetime
 from pathlib import Path
 
 from openpyxl import load_workbook
+from openpyxl.utils import column_index_from_string, get_column_letter
+
 
 # ---------------------------------------------------------------- config ---
 # Change these if your real file names / sheet names are different.
@@ -37,7 +41,11 @@ MAPPING = {
     "onboarding 90days.xlsx": "90days",
 }
 SOURCE_SHEET = None  # None = first sheet in each source file
+FIRST_COL, LAST_COL = "A", "R"  # columns to copy
 # ---------------------------------------------------------------------------
+
+MIN_COL = column_index_from_string(FIRST_COL)
+MAX_COL = column_index_from_string(LAST_COL)
 
 
 def read_source(path, sheet_name):
@@ -45,7 +53,7 @@ def read_source(path, sheet_name):
     wb = load_workbook(path, data_only=True, read_only=True)
     ws = wb[sheet_name] if sheet_name else wb.worksheets[0]
     rows, formats = [], []
-    for row in ws.iter_rows():
+    for row in ws.iter_rows(min_col=MIN_COL, max_col=MAX_COL):
         rows.append([c.value for c in row])
         formats.append([getattr(c, "number_format", "General") for c in row])
     wb.close()
@@ -58,11 +66,13 @@ def read_source(path, sheet_name):
 
 
 def paste_into(ws, rows, formats):
-    """Clear the worksheet and write rows starting at A1."""
-    if ws.max_row > 0:
-        ws.delete_rows(1, ws.max_row)
+    """Clear columns A:R of the worksheet and write rows starting at A1."""
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
+                            min_col=MIN_COL, max_col=MAX_COL):
+        for cell in row:
+            cell.value = None
     for r, (values, fmts) in enumerate(zip(rows, formats), start=1):
-        for c, (value, fmt) in enumerate(zip(values, fmts), start=1):
+        for c, (value, fmt) in enumerate(zip(values, fmts), start=MIN_COL):
             if value is None:
                 continue
             cell = ws.cell(row=r, column=c, value=value)
@@ -75,7 +85,8 @@ def verify(target_path, expected):
     problems = []
     for sheet, rows in expected.items():
         ws = wb[sheet]
-        got = [[c.value for c in row] for row in ws.iter_rows()]
+        got = [[c.value for c in row]
+               for row in ws.iter_rows(min_col=MIN_COL, max_col=MAX_COL)]
         while got and all(v is None for v in got[-1]):
             got.pop()
         if len(got) != len(rows):
@@ -87,7 +98,8 @@ def verify(target_path, expected):
             got_row = list(got_row) + [None] * (width - len(got_row))
             for c, (e, g) in enumerate(zip(exp_row, got_row), start=1):
                 if e != g:
-                    problems.append(f"{sheet}!R{r}C{c}: expected {e!r}, found {g!r}")
+                    col = get_column_letter(c + MIN_COL - 1)
+                    problems.append(f"{sheet}!{col}{r}: expected {e!r}, found {g!r}")
                     break
     wb.close()
     return problems
@@ -125,7 +137,8 @@ def main():
         paste_into(wb[sheet], rows, formats)
         expected[sheet] = rows
         data_rows = max(len(rows) - 1, 0)
-        print(f"Copied : {src_name:<26} -> {sheet:<7} {data_rows} data rows (+1 header)")
+        print(f"Copied : {src_name:<26} -> {sheet:<7} {FIRST_COL}:{LAST_COL}, "
+              f"{data_rows} data rows (+1 header)")
 
     # 4) Save and verify
     try:
